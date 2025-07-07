@@ -86,7 +86,7 @@
    '("8dbbcb2b7ea7e7466ef575b60a92078359ac260c91fe908685b3983ab8e20e3f" default))
  '(org-fold-core-style 'overlays)
  '(package-selected-packages
-   '(dashboard hyperbole macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el eldoc-box cape corfu rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
+   '(ob-sly org-download org-modern dashboard hyperbole macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el eldoc-box cape corfu rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
  '(python-shell-interpreter "/home/bryce/anaconda3/envs/gp-is-good-for-fqe/bin/python3"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -267,17 +267,29 @@
 
 (use-package chatgpt-shell
   :ensure t
-  :custom
-  ((chatgpt-shell-openai-key
-    (lambda ()
-      (auth-source-pass-get 'secret "openai-key")))))
+  :config
+  ;; Disable the SVG icon/logo in prompt compose buffer
+  (defun chatgpt-shell-prompt-compose--history-label ()
+    "Return a plain history label without any SVG/logo."
+    (let ((pos (or (chatgpt-shell-prompt-compose--position)
+                   (cons 1 1))))
+      (propertize (format "[%d/%d]\n\n" (car pos) (cdr pos))
+                  'ignore t
+                  'read-only t
+                  'face font-lock-comment-face
+                  'rear-nonsticky t))))
 
-(define-key global-map (kbd "C-c C-q") #'chatgpt-shell-prompt-compose)
-;(define-key chatgpt-shell-compose-mode-map (kbd "C-c C-c") #'chatgpt-shell-submit)
+(define-key evil-normal-state-map (kbd "`") #'chatgpt-shell-prompt-compose)
+
+(setq chatgpt-shell-models (chatgpt-shell-openai-models))
+
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-copy-env "OPENAI_API_KEY"))
 
 (setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY"))
 
-(getenv "OPENAI_API_KEY")
 
 (use-package deadgrep
   :ensure t
@@ -367,8 +379,6 @@
   :ensure t
   :hook ((lisp-mode) . eldoc-mode) ((sly-mode) . eldoc-mode))
 
-
-
 (use-package eldoc-box
   :ensure t
   :hook (eldoc-mode . eldoc-box-hover-mode))
@@ -430,3 +440,39 @@
   (setq inhibit-startup-screen t) ; Disable default splash screen
   :config
   (dashboard-setup-startup-hook))
+
+(use-package org-modern
+  :ensure t
+  :hook ((org-mode . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda))
+  :config
+  (setq org-modern-hide-stars nil               ;; Keep leading stars visible
+        org-modern-todo-faces
+        '(("TODO" :inherit warning :weight bold)
+          ("DONE" :inherit success :strike-through t))
+        org-modern-table nil                    ;; Optional: keep tables classic
+        org-modern-priority nil                 ;; Optional: turn off priority boxes
+        org-modern-checkbox nil))               ;; Optional: keep classic checkboxes
+
+(use-package org-download
+  :ensure t
+  :hook (org-mode . org-download-enable)
+  :config
+  ;; Save images relative to the org file's directory
+  (setq org-download-method 'directory
+        org-download-image-dir "images"
+        org-download-heading-lvl nil  ;; Don't nest images under heading
+        org-download-screenshot-method "screencapture -i %s" ;; macOS specific
+        org-download-delete-image-after-download nil))
+
+(defun org-download-resize-last-image (&optional width)
+  "Resize the last downloaded image to WIDTH px (default 600)."
+  (interactive "nResize to width (px): ")
+  (let ((last-img org-download-last-file)
+        (target-width (or width 600)))
+    (when last-img
+      (shell-command (format "convert %s -resize %d %s"
+                             (shell-quote-argument last-img)
+                             target-width
+                             (shell-quote-argument last-img)))
+      (message "Resized image to %dpx" target-width))))
