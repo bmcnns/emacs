@@ -295,6 +295,18 @@
   (add-hook 'wgrep-mode-hook #'evil-normalize-keymaps)
   (add-hook 'wgrep-mode-hook (lambda () (evil-normal-state))))
 
+(with-eval-after-load 'deadgrep
+  ;; Always show results buffer in same window
+  (defun deadgrep--visit-search-buffer-same-window ()
+    (let ((buffer (get-buffer deadgrep--search-buffer-name)))
+      (when buffer
+        (switch-to-buffer buffer))))
+  (advice-add 'deadgrep--visit-search-buffer :override
+              #'deadgrep--visit-search-buffer-same-window)
+
+  ;; Also use same window when visiting matches
+  (setq deadgrep-display-buffer-function #'switch-to-buffer))
+
 (use-package undo-tree
   :ensure t
   :init
