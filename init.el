@@ -265,35 +265,29 @@
                ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
 
 
-(use-package chatgpt-shell
-  :ensure t
-  :config
-  ;; Disable the SVG icon/logo in prompt compose buffer
-  (defun chatgpt-shell-prompt-compose--history-label ()
-    "Return a plain history label without any SVG/logo."
-    (let ((pos (or (chatgpt-shell-prompt-compose--position)
-                   (cons 1 1))))
-      (propertize (format "[%d/%d]\n\n" (car pos) (cdr pos))
-                  'ignore t
-                  'read-only t
-                  'face font-lock-comment-face
-                  'rear-nonsticky t))))
-
-(define-key evil-normal-state-map (kbd "`") #'chatgpt-shell-prompt-compose)
-
-(setq chatgpt-shell-models (chatgpt-shell-openai-models))
-
 (use-package exec-path-from-shell
   :ensure t
   :config
   (exec-path-from-shell-copy-env "OPENAI_API_KEY"))
 
-(setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY"))
-
+(use-package chatgpt-shell
+  :ensure t
+  :after exec-path-from-shell evil
+  :init
+  (setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY")
+        chatgpt-shell-models (chatgpt-shell-openai-models)
+        chatgpt-shell-model-version "gpt-4o"
+        chatgpt-shell-default-interface 'openai)
+  :config
+  (define-key chatgpt-shell-mode-map (kbd "RET") nil)
+  (evil-define-key 'normal chatgpt-shell-mode-map
+    (kbd "RET") #'chatgpt-shell-submit)
+  (evil-define-key 'normal 'global (kbd "`") #'chatgpt-shell))
+    
 
 (use-package deadgrep
   :ensure t
-  :after evil
+  :after evil`
   :bind (:map evil-normal-state-map
               ("," . deadgrep))
   :config
@@ -476,3 +470,21 @@
                              target-width
                              (shell-quote-argument last-img)))
       (message "Resized image to %dpx" target-width))))
+
+
+(defun my/sly-repl-here ()
+  "Start SLY and switch to the REPL in the current window."
+  (interactive)
+  (sly)
+  (let ((repl (sly-mrepl--find-create (sly-connection))))
+    (when repl
+      (switch-to-buffer repl))))
+
+(advice-add 'sly :after
+            (lambda (&rest _)
+              (let ((repl (sly-mrepl--find-create (sly-connection))))
+                (when repl
+                  (switch-to-buffer repl)))))
+
+(setq display-buffer-alist
+      '(("\\*sly-mrepl.*\\*" . (display-buffer-same-window))))
