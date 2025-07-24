@@ -84,9 +84,10 @@
  '(custom-enabled-themes nil)
  '(custom-safe-themes
    '("8dbbcb2b7ea7e7466ef575b60a92078359ac260c91fe908685b3983ab8e20e3f" default))
+ '(display-time-default-load-average nil)
  '(org-fold-core-style 'overlays)
  '(package-selected-packages
-   '(ob-sly org-download org-modern dashboard hyperbole macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el eldoc-box cape corfu rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
+   '(all-the-icons doom-modeline ob-sly org-download org-modern dashboard hyperbole macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el cape corfu rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
  '(python-shell-interpreter "/home/bryce/anaconda3/envs/gp-is-good-for-fqe/bin/python3"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -275,7 +276,6 @@
   :after exec-path-from-shell evil
   :init
   (setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY")
-        chatgpt-shell-models (chatgpt-shell-openai-models)
         chatgpt-shell-model-version "gpt-4o"
         chatgpt-shell-default-interface 'openai)
   :config
@@ -287,7 +287,7 @@
 
 (use-package deadgrep
   :ensure t
-  :after evil`
+  :after evil
   :bind (:map evil-normal-state-map
               ("," . deadgrep))
   :config
@@ -369,18 +369,12 @@
   :ensure t
   :hook (lisp-mode . rainbow-delimiters-mode))
 
-(use-package eldoc
-  :ensure t
-  :hook ((lisp-mode) . eldoc-mode) ((sly-mode) . eldoc-mode))
-
-(use-package eldoc-box
-  :ensure t
-  :hook (eldoc-mode . eldoc-box-hover-mode))
-
 (use-package cape
   :ensure t
   :init
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev))
+  (add-to-list 'completion-at-point-functions #'cape-symbol)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
+
 
 (use-package corfu
   :ensure t
@@ -390,7 +384,10 @@
   (corfu-auto t)                 ;; Enable auto-completion
   (corfu-cycle t)                ;; Allow cycling through candidates
   (corfu-preview-current nil)   ;; Disable live preview
-  (corfu-quit-no-match 'separator))
+  (corfu-quit-no-match 'separator)
+  (corfu-auto-delay 0.0)) ;; Show completions immediately
+
+
 
 (use-package sly
   :ensure t
@@ -400,6 +397,11 @@
 
 (use-package sly-quicklisp :ensure t)
 (use-package sly-asdf :ensure t)
+
+(use-package eldoc
+  :after sly
+  :ensure t
+  :hook ((lisp-mode) . eldoc-mode) ((sly-mode) . eldoc-mode))
 
 (use-package embark
   :ensure t
@@ -488,3 +490,73 @@
 
 (setq display-buffer-alist
       '(("\\*sly-mrepl.*\\*" . (display-buffer-same-window))))
+
+;; Ensure all-the-icons package is installed
+(use-package all-the-icons
+  :ensure t)
+
+;; Install and configure doom-modeline
+(use-package doom-modeline
+  :after all-the-icons
+  :ensure t
+  :init
+  ;; Set custom variables for the doom-modeline
+  (setq doom-modeline-modal-icon t               ;; Show/hide evil state icon
+        doom-modeline-major-mode-icon nil        ;; Hide major mode icon
+        doom-modeline-minor-modes nil            ;; Hide minor modes from modeline
+        doom-modeline-buffer-file-name-style 'truncate-with-project
+        doom-modeline-buffer-encoding nil
+        doom-modeline-time t
+        doom-modeline-time-icon nil
+        doom-modeline-time-live-icon nil
+        doom-modeline-project-name t
+        doom-modeline-total-line-number t
+        doom-modeline-buffer-state-icon nil))
+
+ ;; Install straight.el (package manager)
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))          ;; Load straight.el
+
+;; Use straight.el as the backend for use-package
+(straight-use-package 'use-package)
+
+;; Install and configure nerd-icons
+(use-package nerd-icons
+  :straight (nerd-icons
+             :type git
+             :host github
+             :repo "rainstormstudio/nerd-icons.el"
+             :files (:defaults "data"))
+  :custom
+  (nerd-icons-font-family "Symbols Nerd Font Mono")) ;; Set default Nerd Font for GUI
+
+(doom-modeline-mode 1)
+
+(display-time-mode t)
+(setq display-time-default-load-average nil)
+
+(defun list-unsaved-buffers ()
+  "List unsaved buffers and let the user select one to visit."
+  (interactive)
+  (let* ((unsaved (seq-filter (lambda (buf)
+                                (and (buffer-modified-p buf)
+                                     (buffer-file-name buf)))
+                              (buffer-list)))
+         (names (mapcar #'buffer-name unsaved)))
+    (if names
+        (let ((choice (completing-read "Unsaved buffers: " names nil t)))
+          (when choice
+            (switch-to-buffer choice)))
+      (message "No unsaved buffers."))))
+
+(global-set-key (kbd "C-s") #'list-unsaved-buffers)
