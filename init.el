@@ -560,3 +560,9 @@
       (message "No unsaved buffers."))))
 
 (global-set-key (kbd "C-s") #'list-unsaved-buffers)
+
+(setq org-babel-lisp-eval-fn #'sly-eval)
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((lisp . t)))
