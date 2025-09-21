@@ -90,11 +90,12 @@
  '(custom-safe-themes
    '("8dbbcb2b7ea7e7466ef575b60a92078359ac260c91fe908685b3983ab8e20e3f" default))
  '(display-time-default-load-average nil)
+ '(notmuch-address-command 'internal)
  '(org-fold-core-style 'overlays)
  '(package-selected-packages
    '(all-the-icons doom-modeline ob-sly org-download org-modern dashboard macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el cape rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
-
- '(python-shell-interpreter "/home/bryce/anaconda3/envs/gp-is-good-for-fqe/bin/python3"))
+ '(python-shell-interpreter "/home/bryce/anaconda3/envs/gp-is-good-for-fqe/bin/python3")
+ '(safe-local-variable-values '((buffer-read-only . 1))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -288,7 +289,7 @@
   (define-key chatgpt-shell-mode-map (kbd "RET") nil)
   (evil-define-key 'normal chatgpt-shell-mode-map
     (kbd "RET") #'chatgpt-shell-submit)
-  (evil-define-key 'normal 'global (kbd "`") #'chatgpt-shell))
+  (evil-define-key 'normal 'global (kbd "C-`") #'chatgpt-shell))
     
 
 (use-package deadgrep
@@ -374,12 +375,6 @@
 (use-package rainbow-delimiters
   :ensure t
   :hook (lisp-mode . rainbow-delimiters-mode))
-
-(use-package cape
-  :ensure t
-  :init
-  (add-to-list 'completion-at-point-functions #'cape-symbol)
-  (add-to-list 'completion-at-point-functions #'cape-keyword))
 
 (use-package sly
   :ensure t
@@ -545,7 +540,9 @@
             (switch-to-buffer choice)))
       (message "No unsaved buffers."))))
 
-(global-set-key (kbd "C-c C-s") #'list-unsaved-buffers)
+(define-prefix-command 'my-additional-prefix)
+(global-set-key (kbd "C-a") 'my-additional-prefix)
+(global-set-key (kbd "C-a s") #'list-unsaved-buffers)
 
 (setq org-babel-lisp-eval-fn #'sly-eval)
 
@@ -575,7 +572,8 @@
 
 (setq org-agenda-files '("~/Repos/orgfiles/journal.org"
                          "~/Repos/orgfiles/meetings.org"
-                         "~/Repos/orgfiles/todo.org"))
+                         "~/Repos/orgfiles/todo.org"
+                         "~/Repos/orgfiles/calendar.org"))
 
 ;; Make capture quick and easy to use
 (global-set-key (kbd "C-c c") #'org-capture)
@@ -655,25 +653,81 @@ Defaults: /tmp/bryce.ics and 129.173.67.123."
 
 (global-set-key [remap keyboard-quit] #'crux-keyboard-quit-dwim)
 
-(global-set-key (kbd "C-c i") #'crux-find-user-init-file)
+(global-set-key (kbd "C-c C-9") #'crux-find-user-init-file)
 
 (global-set-key (kbd "C-c r") #'crux-rename-file-and-buffer)
 
 (global-set-key (kbd "C-x 4 t") #'crux-transpose-windows)
 
+(use-package notmuch
+  :ensure t)
+
+(setq sendmail-program "msmtp"
+      message-sendmail-f-is-evil t
+      message-send-mail-function 'message-send-mail-with-sendmail)
+
+(setq message-sendmail-extra-arguments '("--read-envelope-from"))
+(setq mail-specify-envelope-from t
+      mail-envelope-from 'header
+      message-sendmail-f-is-evil t)
+
+(define-prefix-command 'my-mail-map)
+(global-set-key (kbd "C-c m") 'my-mail-map)
+(global-set-key (kbd "C-c m n") #'notmuch-mua-new-mail)
+
+(global-set-key (kbd "C-c m h") #'notmuch)
+
+(global-set-key (kbd "C-c m i") (lambda ()
+                                  (interactive)
+                                  (notmuch-search "tag:inbox")))
+
+;; use notmuch’s built-in address source
+
+(setq notmuch-search-oldest-first nil)
+(setq-default notmuch-search-oldest-first nil)
+
+(use-package khalel
+  :after org
+  :config (khalel-add-capture-template)
+  :ensure t)
+(setq khalel-vdirsyncer-command "vdirsyncer")
+(setq khalel-khal-command "khal")
+(setq khalel-capture-key "e")
+(setq khalel-import-org-file (concat "~/Repos/orgfiles/" "/" "calendar.org"))
+(setq khalel-import-end-date "+30d")
+(setq khalel-import-org-file-confirm-overwrite nil)
 
 (use-package doom-modeline-now-playing
   :straight (doom-modeline-now-playing :host github :repo "elken/doom-modeline-now-playing")
-  :ensure t
   :after doom-modeline)
+
+(setq doom-modeline-now-playing t)
 
 (doom-modeline-def-modeline 'main
   '(bar workspace-name window-number modals matches buffer-info remote-host
         buffer-position parrot selection-info)
   '(misc-info persp-name lsp irc mu4e github debug repl
         minor-modes input-method indent-info buffer-encoding major-mode
-        process vcs now-playing))
+        process vcs now-playing))   ;; <-- add here
 
 (doom-modeline-set-modeline 'main t)
 
-(setq doom-modeline-now-playing-max-length 50)
+(setq mail-user-agent 'message-user-agent)
+
+(use-package org-msg
+  :ensure t
+  :hook
+  (message-mode . org-msg-mode)
+  (notmuch-message-mode . org-msg-edit-mode)
+  :config
+  (org-msg-mode 1))
+
+
+(defun my/notmuch-sync-before (&rest args)
+  "Always sync mail before running a notmuch command."
+  (start-process-shell-command
+   "mail-sync" "*mail-sync*"
+   "mbsync -a && notmuch new"))
+
+(advice-add 'notmuch :before #'my/notmuch-sync-before)
+
