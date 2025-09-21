@@ -1,4 +1,9 @@
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(require 'package)
+(setq package-archives
+      '(("melpa" . "https://melpa.org/packages/")
+        ("gnu" . "https://elpa.gnu.org/packages/")
+        ("org" . "http://orgmode.org/elpa/")))
+(package-initialize)
 
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
@@ -87,7 +92,8 @@
  '(display-time-default-load-average nil)
  '(org-fold-core-style 'overlays)
  '(package-selected-packages
-   '(all-the-icons doom-modeline ob-sly org-download org-modern dashboard hyperbole macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el cape corfu rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
+   '(all-the-icons doom-modeline ob-sly org-download org-modern dashboard macrostep embark-consult embark sly-asdf sly-quicklisp sly straight straight-el cape rainbow-delimiters hl-todo which-key doom-themes monokai-theme github-theme gruvbox-theme ef-themes modus-themes undo-tree wgrep deadgrep chatgpt-shell treemacs orderless consult marginalia vertico org-fragtog py-autopep8 flycheck elpy org-bullets magit ivy-rich evil-collection counsel))
+
  '(python-shell-interpreter "/home/bryce/anaconda3/envs/gp-is-good-for-fqe/bin/python3"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -375,20 +381,6 @@
   (add-to-list 'completion-at-point-functions #'cape-symbol)
   (add-to-list 'completion-at-point-functions #'cape-keyword))
 
-
-(use-package corfu
-  :ensure t
-  :init
-  (global-corfu-mode)
-  :custom
-  (corfu-auto t)                 ;; Enable auto-completion
-  (corfu-cycle t)                ;; Allow cycling through candidates
-  (corfu-preview-current nil)   ;; Disable live preview
-  (corfu-quit-no-match 'separator)
-  (corfu-auto-delay 0.0)) ;; Show completions immediately
-
-
-
 (use-package sly
   :ensure t
   :hook ((sly-mode . eldoc-mode))
@@ -423,12 +415,6 @@
   (setq eat-terminal-type "xterm-256color"))
 
 (defalias 'shell 'eat)
-
-(use-package hyperbole
-  :ensure t
-  :init
-  (hyperbole-mode 1))
-
 
 (use-package dashboard
   :ensure t
@@ -559,10 +545,135 @@
             (switch-to-buffer choice)))
       (message "No unsaved buffers."))))
 
-(global-set-key (kbd "C-s") #'list-unsaved-buffers)
+(global-set-key (kbd "C-c C-s") #'list-unsaved-buffers)
 
 (setq org-babel-lisp-eval-fn #'sly-eval)
 
+(setq org-babel-python-command "/usr/bin/python3")
+
 (org-babel-do-load-languages
  'org-babel-load-languages
- '((lisp . t)))
+ '((lisp . t)
+   (python .t)))
+
+(use-package htmlize :ensure t)
+
+;; Load local/latest org
+(use-package org
+  :pin org
+  :ensure t)
+
+(use-package orderless :ensure t)
+
+(set-face-attribute 'minibuffer-prompt nil :height 140)
+(add-hook 'minibuffer-setup-hook
+          (lambda () (setq line-spacing 0.2)))
+
+;; Org mode setup
+
+(setq org-directory "~/Repos/orgfiles")
+
+(setq org-agenda-files '("~/Repos/orgfiles/journal.org"
+                         "~/Repos/orgfiles/meetings.org"
+                         "~/Repos/orgfiles/todo.org"))
+
+;; Make capture quick and easy to use
+(global-set-key (kbd "C-c c") #'org-capture)
+
+;; Show entries with inactive timestamps in the agenda
+(setq org-agenda-include-inactive-timestamps nil)
+
+(setq org-capture-templates
+      '(("j" "Journal" entry
+         (file+olp+datetree "~/Repos/orgfiles/journal.org")
+         "* %?\n:PROPERTIES:\n:Created: %U\n:END:\n"
+         :empty-lines 1)
+        ("c" "Check-in" entry
+         (file+olp+datetree "~/Repos/orgfiles/check-ins.org")
+         "* %?\n:PROPERTIES:\n:Created: %U\n:END:\n"
+         :empty-lines 1)
+        ("t" "Task" entry
+         (file+headline "~/Repos/orgfiles/todo.org" "Inbox")
+         "* TODO %?\n:PROPERTIES:\n:Created: %U\n:END:\n"
+         :empty-lines 1)
+        ("m" "Meeting" entry
+         (file+headline "~/Repos/orgfiles/meetings.org" "Meetings")
+         "* %^{Title}\n%^{When|Timestamp or range|<%Y-%m-%d %a %H:%M>|<%Y-%m-%d %a %H:%M>--<%Y-%m-%d %a %H:%M>}\n:PROPERTIES:\n:Created: %U\n:SUMMARY: %\\1\n:LOCATION: %^{Location|Online}\n:TIMEZONE: %^{TZ|America/Halifax}\n:CLASS: %^{Class|PUBLIC|CONFIDENTIAL|PRIVATE}\n:END:\n%^{Description}\n"
+         :empty-lines 1)))
+    
+
+(global-set-key (kbd "C-c a") #'org-agenda)
+
+(use-package calfw
+  :ensure t)
+
+(use-package calfw-org
+  :after calfw
+  :ensure t)
+
+(global-set-key (kbd "C-c C-d") #'cfw:open-org-calendar)
+
+(setq org-agenda-todo-ignore-without-schedules t)
+
+(defun sync-org-agenda-with-remote-server (&optional calendar-file remote-path)
+  "Copy CALENDAR-FILE to bryce@REMOTE-IP:~/bryce.ics via TRAMP.
+Defaults: /tmp/bryce.ics and 129.173.67.123."
+  (interactive)
+  (let* ((calendar-file (or calendar-file "~/Repos/orgfiles/bryce.ics"))
+         (remote-path (or remote-path "/ssh:bmacinnis@timberlea.cs.dal.ca:~/public_html/bryce.ics")))
+    (when (file-exists-p remote-path)
+      (delete-file remote-path))
+    (copy-file calendar-file remote-path t)))
+
+(defun publish-org-agenda ()
+  (org-icalendar-combine-agenda-files)
+  (sync-org-agenda-with-remote-server "~/Repos/orgfiles/bryce.ics" "/ssh:bmacinnis@timberlea.cs.dal.ca:~/public_html/bryce.ics"))
+  
+;; Where your meetings file lives
+(defconst bryce-meetings-file
+  (expand-file-name "~/Repos/orgfiles/meetings.org"))
+
+(defun bryce--maybe-publish-agenda ()
+  "If the just-saved buffer is meetings.org, publish the agenda & sync."
+  (when (and buffer-file-name
+             (string= (file-truename buffer-file-name)
+                      (file-truename bryce-meetings-file)))
+    (message "Publishing iCal…")
+    (publish-org-agenda)
+    (message "Publishing iCal…done")))
+
+(add-hook 'after-save-hook #'bryce--maybe-publish-agenda)
+
+(setq org-icalendar-combined-agenda-file "~/Repos/orgfiles/bryce.ics")
+
+(setq erc-autojoin-channels-alist '(("" "#lispgames")))
+
+(use-package crux
+  :ensure t)
+
+(global-set-key (kbd "s-r") #'crux-recentf-find-file)
+
+(global-set-key [remap keyboard-quit] #'crux-keyboard-quit-dwim)
+
+(global-set-key (kbd "C-c i") #'crux-find-user-init-file)
+
+(global-set-key (kbd "C-c r") #'crux-rename-file-and-buffer)
+
+(global-set-key (kbd "C-x 4 t") #'crux-transpose-windows)
+
+
+(use-package doom-modeline-now-playing
+  :straight (doom-modeline-now-playing :host github :repo "elken/doom-modeline-now-playing")
+  :ensure t
+  :after doom-modeline)
+
+(doom-modeline-def-modeline 'main
+  '(bar workspace-name window-number modals matches buffer-info remote-host
+        buffer-position parrot selection-info)
+  '(misc-info persp-name lsp irc mu4e github debug repl
+        minor-modes input-method indent-info buffer-encoding major-mode
+        process vcs now-playing))
+
+(doom-modeline-set-modeline 'main t)
+
+(setq doom-modeline-now-playing-max-length 50)
