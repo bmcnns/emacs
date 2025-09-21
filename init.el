@@ -761,4 +761,5 @@ Defaults: /tmp/bryce.ics and 129.173.67.123."
   )
 
 (setq corfu-auto t
-      corfu-quit-no-match 'separator)
+      corfu-auto-prefix 1
+      corfu-auto-delay 0.0)
