@@ -3,7 +3,8 @@
 (setq package-archives
       '(("melpa" . "https://melpa.org/packages/")
         ("gnu" . "https://elpa.gnu.org/packages/")
-        ("org" . "http://orgmode.org/elpa/")))
+        ("org" . "http://orgmode.org/elpa/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
 (package-initialize)
 
 (menu-bar-mode -1)
@@ -21,8 +22,9 @@
   :config
   (evil-collection-init))
 
-;; Enable Evil
-(require 'evil)
+(use-package evil
+  :ensure t)
+
 (evil-mode 1)
 
 (use-package counsel
@@ -89,7 +91,7 @@
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes nil)
  '(custom-safe-themes
-   '("8dbbcb2b7ea7e7466ef575b60a92078359ac260c91fe908685b3983ab8e20e3f" default))
+   '("4594d6b9753691142f02e67b8eb0fda7d12f6cc9f1299a49b819312d6addad1d" "b99ff6bfa13f0273ff8d0d0fd17cc44fab71dfdc293c7a8528280e690f084ef0" "e4a702e262c3e3501dfe25091621fe12cd63c7845221687e36a79e17cf3a67e0" "e8bd9bbf6506afca133125b0be48b1f033b1c8647c628652ab7a2fe065c10ef0" "d609d9aaf89d935677b04d34e4449ba3f8bbfdcaaeeaab3d21ee035f43321ff1" "b1791a921c4f38cb966c6f78633364ad880ad9cf36eef01c60982c54ec9dd088" "ac893acecb0f1cf2b6ccea5c70ea97516c13c2b80c07f3292c21d6eb0cb45239" "6af300029805f10970ebec4cea3134f381cd02f04c96acba083c76e2da23f3ec" "c038d994d271ebf2d50fa76db7ed0f288f17b9ad01b425efec09519fa873af53" "aff0396925324838889f011fd3f5a0b91652b88f5fd0611f7b10021cc76f9e09" "4c16a8be2f20a68f0b63979722676a176c4f77e2216cc8fe0ea200f597ceb22e" "90185f1d8362727f2aeac7a3d67d3aec789f55c10bb47dada4eefb2e14aa5d01" "ffa78fc746f85d1c88a2d1691b1e37d21832e9a44a0eeee114a00816eabcdaf9" "cee5c56dc8b95b345bfe1c88d82d48f89e0f23008b0c2154ef452b2ce348da37" "b9c002dc827fb75b825da3311935c9f505d48d7ee48f470f0aa7ac5d2a595ab2" "19b62f442479efd3ca4c1cef81c2311579a98bbc0f3684b49cdf9321bd5dfdbf" "fae5872ff90462502b3bedfe689c02d2fa281bc63d33cb007b94a199af6ccf24" "b3ba955a30f22fe444831d7bc89f6466b23db8ce87530076d1f1c30505a4c23b" "71b688e7ef7c844512fa7c4de7e99e623de99a2a8b3ac3df4d02f2cd2c3215e7" "3d9938bbef24ecee9f2632cb25339bf2312d062b398f0dfb99b918f8f11e11b1" "541282f66e5cc83918994002667d2268f0a563205117860e71b7cb823c1a11e9" "da69584c7fe6c0acadd7d4ce3314d5da8c2a85c5c9d0867c67f7924d413f4436" "a0e9bc5696ce581f09f7f3e7228b949988d76da5a8376e1f2da39d1d026af386" "2551f2b4bc12993e9b8560144fb072b785d4cddbef2b6ec880c602839227b8c7" "b41d0a9413fb0034cea34eb8c9f89f6e243bdd76bccecf8292eb1fefa42eaf0a" "b9f44212b4be6f0466811c5d8a297dda3c40dbf4c4cfd97c1686fceb2043b617" "8363207a952efb78e917230f5a4d3326b2916c63237c1f61d7e5fe07def8d378" "5a0ddbd75929d24f5ef34944d78789c6c3421aa943c15218bac791c199fc897d" "51fa6edfd6c8a4defc2681e4c438caf24908854c12ea12a1fbfd4d055a9647a3" "75b371fce3c9e6b1482ba10c883e2fb813f2cc1c88be0b8a1099773eb78a7176" "5aedf993c7220cbbe66a410334239521d8ba91e1815f6ebde59cecc2355d7757" "18a1d83b4e16993189749494d75e6adb0e15452c80c431aca4a867bcc8890ca9" "d5fd482fcb0fe42e849caba275a01d4925e422963d1cd165565b31d3f4189c87" "8ba8918be4bb12c57cae812f8f9543e7a4b59a3cc1d5d4a4f97dc26a397c94e3" "7235b77f371f46cbfae9271dce65f5017b61ec1c8687a90ff30c6db281bfd6b7" "a9028cd93db14a5d6cdadba789563cb90a97899c4da7df6f51d58bb390e54031" "1c2fb3448ce245f18c62fde3c7cfd008e69a27e88ae8a03fbb62857f13d0b6fe" "c5975101a4597094704ee78f89fb9ad872f965a84fb52d3e01b9102168e8dc40" "6bf350570e023cd6e5b4337a6571c0325cec3f575963ac7de6832803df4d210a" "0adcffc4894e2dd21283672da7c3d1025b5586bcef770fdc3e2616bdb2a771cd" "8529b6ff705d30e6df50734db169b376e9de050ed56ce4e59ff98d774a710847" "3f0b3692ad48f88c0006ddd1543175376aff7a621d95739a02142f9081478e90" "d35afe834d1f808c2d5dc7137427832ccf99ad2d3d65d65f35cc5688404fdf30" "2a36b8d0abc07a341a90a3a5997ea143d5f1f02f5cff2901078e9cd04796b5a0" "72d9086e9e67a3e0e0e6ba26a1068b8b196e58a13ccaeff4bfe5ee6288175432" "4d714a034e7747598869bef1104e96336a71c3d141fa58618e4606a27507db4c" "3f24dd8f542f4aa8186a41d5770eb383f446d7228cd7a3413b9f5e0ec0d5f3c0" "9d5124bef86c2348d7d4774ca384ae7b6027ff7f6eb3c401378e298ce605f83a" "28b9703810da2df6fb8667b681cea47d6fbfa5df6a7f23d5dee41d25acca38ba" "8dbbcb2b7ea7e7466ef575b60a92078359ac260c91fe908685b3983ab8e20e3f" default))
  '(display-time-default-load-average nil)
  '(notmuch-address-command 'internal)
  '(org-fold-core-style 'overlays)
@@ -122,11 +124,9 @@
                    ("\\paragraph{%s}" . "\\paragraph*{%s}")
                    ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
 
-(setq inferior-lisp-program "sbcl")
 
 (set-face-attribute 'default nil :height 130)
 
-(setq inferior-lisp-program "sbcl")
 (use-package org-fragtog
     :ensure t
     :after org
@@ -137,7 +137,8 @@
      (plist-put org-format-latex-options :scale 2.5)
      (plist-put org-format-latex-options :foreground 'auto)
      (plist-put org-format-latex-options :background 'auto)))
-(setq inferior-lisp-program "sbcl --dynamic-space-size 4096")
+
+(setq inferior-lisp-program "sbcl --dynamic-space-size 8192")
 
 (with-eval-after-load 'ox-latex
   (add-to-list 'org-latex-classes
@@ -223,7 +224,7 @@
   (find-file "/ssh:bryce@129.173.67.123:/home/bryce/"))
 
 (setq enable-recursive-minibuffers t)
-
+(require 'minibuffer)
 (use-package vertico
   :ensure t
   :init
@@ -379,9 +380,7 @@
 
 (use-package sly
   :ensure t
-  :hook ((sly-mode . eldoc-mode))
-  :config
-  (setq inferior-lisp-program "/opt/homebrew/bin/sbcl"))
+  :hook ((sly-mode . eldoc-mode)))
 
 (use-package sly-quicklisp :ensure t)
 (use-package sly-asdf :ensure t)
@@ -678,6 +677,11 @@ Defaults: /tmp/bryce.ics and 129.173.67.123."
 
 (global-set-key (kbd "C-c m h") #'notmuch)
 
+(global-set-key (kbd "C-c m g") (lambda ()
+                                  (interactive)
+                                  (shell-command-to-string "mbsync -a -j 4")
+                                  (shell-command-to-string "notmuch new")))
+
 (global-set-key (kbd "C-c m i") (lambda ()
                                   (interactive)
                                   (notmuch-search "tag:inbox")))
@@ -724,6 +728,7 @@ Defaults: /tmp/bryce.ics and 129.173.67.123."
   (org-msg-mode 1))
 
 
+
 (defun my/notmuch-sync-before (&rest args)
   "Always sync mail before running a notmuch command."
   (start-process-shell-command
@@ -762,4 +767,35 @@ Defaults: /tmp/bryce.ics and 129.173.67.123."
 
 (setq corfu-auto t
       corfu-auto-prefix 1
-      corfu-auto-delay 0.0)
+      corfu-auto-delay 0.5)
+
+(use-package sly-repl-ansi-color
+  :straight (:host github :repo "PuercoPop/sly-repl-ansi-color")
+  :after sly
+  :config
+  (push 'sly-repl-ansi-color sly-contribs))
+
+(use-package origami
+  :ensure t
+  :init
+  (global-origami-mode))
+
+(evil-define-key 'normal 'global (kbd "TAB") #'origami-toggle-node)
+(evil-define-key 'normal 'global (kbd "<S-tab>") #'origami-open-all-nodes)
+(evil-define-key 'normal 'global (kbd "<C-tab>") #'origami-close-all-nodes)
+
+(use-package demap
+  :ensure t)
+
+
+(global-set-key (kbd "<f2>") #'demap-toggle)
+
+(setq magit-show-long-lines-warning nil)
+
+(use-package ledger-mode
+  :ensure t
+  :mode ("\\.ledger\\'" . ledger-mode))
+
+(use-package scad-mode
+  :ensure t)
+
