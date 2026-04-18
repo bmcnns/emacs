@@ -33,6 +33,7 @@
   :ensure t
   :defer t
   :config
+  (setq sly-contribs (remove 'sly-quicklisp (remove 'sly-asdf sly-contribs)))
   (setq inferior-lisp-program "sbcl"))
 
 ;; better navigation in the minibuffer
@@ -63,6 +64,7 @@
 (use-package embark
   :ensure t
   :bind ("C-." . embark-act))
+(define-key evil-normal-state-map (kbd "C-.") 'embark-act)
 
 ;; navigation tool for jumping around
 (use-package avy
@@ -72,7 +74,8 @@
 ;; native terminal emulator
 (use-package eat
   :ensure t
-  :defer t)
+  :defer t
+  )
 
 ; disable the key binding that makes me turn evil mode off by mistake
 (define-key evil-normal-state-map (kbd "C-z") nil)
@@ -92,3 +95,50 @@
   :ensure t
   :defer t
   :bind ("M-o" . ace-window))
+
+;; awesome searching across files
+(use-package deadgrep
+  :ensure t
+  :defer t)
+
+(define-key evil-normal-state-map (kbd ",") 'deadgrep)
+
+;; move backups to a better place
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; nice utility i wrote for listing unsaved buffers
+(defun list-unsaved-buffers ()
+  "List unsaved buffers and let the user select one to visit."
+  (interactive)
+  (let* ((unsaved (seq-filter (lambda (buf)
+                                (and (buffer-modified-p buf)
+                                     (buffer-file-name buf)))
+                              (buffer-list)))
+         (names (mapcar #'buffer-name unsaved)))
+    (if names
+        (let ((choice (completing-read "Unsaved buffers: " names nil t)))
+          (when choice
+            (switch-to-buffer choice)))
+      (message "No unsaved buffers."))))
+
+;; load my experiments package
+(use-package experiment
+  :ensure nil
+  :load-path "~/Repos/experiment"
+  :commands (cluster-open))
+
+;; comment/uncomment with ; in normal mode
+(defun comment-or-uncomment-selection ()
+  "Comment or uncomment the current line or selected region."
+  (interactive)
+  (if (use-region-p)
+      (comment-or-uncomment-region (region-beginning) (region-end))
+    (comment-or-uncomment-region (line-beginning-position) (line-end-position))))
+
+(define-key evil-normal-state-map (kbd ";") #'comment-or-uncomment-selection)
+(define-key evil-visual-state-map (kbd ";") #'comment-or-uncomment-selection)
+
+;; remove pg-up/pg-down behaviour
+;; -- never needed it, never wanted it.
+(global-set-key (kbd "<prior>") 'ignore)
+(global-set-key (kbd "<next>") 'ignore)
